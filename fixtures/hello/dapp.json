@@ -1,0 +1,17 @@
+{
+  "_links": {
+    "website": {
+      "href": "https://helloworld.example.com"
+    },
+    "repo": {
+      "href": "https://github.com/nullstyle/hello"
+    }
+  },
+
+  "name": "hello",
+  "description": "A simple hello world",
+  "channels": {
+    "latest": "0.4.0",
+    "beta": "0.3.0",
+  }
+}
