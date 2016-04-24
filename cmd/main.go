@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -14,22 +15,39 @@ var cfgFile string
 var identity string
 var app *dapp.App
 var config struct {
-	CacheDir   string
-	Identities map[string]string
+	CacheDir          string
+	Identities        map[string]string
+	TrustedPublishers []string
 }
 
-func fail(err error, code int) {
-	if err == nil {
-		panic("cannot fail with nil error")
+func addIdentity(name, seedOrAddress string) error {
+	if config.Identities[name] != "" {
+		return errors.New("identity already exists")
 	}
 
-	errors.Print(err)
+	_, err := dapp.NewIdentity(seedOrAddress)
+	if err != nil {
+		return errors.Wrap(err, "addIdentity: invalid identity")
+	}
+
+	config.Identities[name] = seedOrAddress
+	return nil
+}
+
+func fail(err string, code int) {
+	if err == "" {
+		panic("cannot fail with empty message")
+	}
+
+	fmt.Fprintln(os.Stderr, err)
 	os.Exit(code)
 }
 
 func mustSucceed(err error) {
 	if err != nil {
-		fail(err, -1)
+		var buf bytes.Buffer
+		errors.Fprint(&buf, err)
+		fail(buf.String(), -1)
 	}
 }
 
@@ -46,11 +64,33 @@ func getIdentity(alias string) *dapp.Identity {
 	return id
 }
 
+func resolveAlias(idOrAlias string) (ret *dapp.Identity, err error) {
+	ret, err = dapp.NewIdentity(idOrAlias)
+	if err == nil {
+		return
+	}
+
+	aliasID := config.Identities[idOrAlias]
+	if aliasID == "" {
+		err = errors.New("resolveAlias: no alias found")
+		return
+	}
+
+	ret, err = dapp.NewIdentity(aliasID)
+	if err != nil {
+		err = errors.Wrap(err, "resolveAlias: corrupt alias")
+		return
+	}
+
+	return
+}
+
 func saveConfig(path string) error {
 
 	toSave := map[string]interface{}{
-		"CacheDir":   config.CacheDir,
-		"Identities": config.Identities,
+		"CacheDir":          config.CacheDir,
+		"Identities":        config.Identities,
+		"TrustedPublishers": config.TrustedPublishers,
 	}
 
 	b, err := yaml.Marshal(toSave)

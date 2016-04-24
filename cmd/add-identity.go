@@ -1,11 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/dappstore/dapp/dapp"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -24,19 +21,7 @@ var addIdentityCmd = &cobra.Command{
 		name := args[0]
 		seedOrAddress := args[1]
 
-		if config.Identities[name] != "" {
-			message := fmt.Sprintf("identity already exists")
-			fail(errors.New(message), -1)
-		}
-
-		_, err := dapp.NewIdentity(seedOrAddress)
-		if err != nil {
-			message := fmt.Sprintf("ID is invalid")
-			fail(errors.New(message), -1)
-		}
-
-		config.Identities[name] = seedOrAddress
-
+		mustSucceed(addIdentity(name, seedOrAddress))
 		mustSucceed(saveConfig(cfgFile))
 	},
 }
