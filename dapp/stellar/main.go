@@ -8,6 +8,10 @@ import (
 	// tx "github.com/stellar/go-stellar-base/build"
 )
 
+// HorizonOracle implemente agree.Oracle, provided a stellar-powered agreement
+// oracle.
+type HorizonOracle string
+
 // AccountExists returns true if a stellar account at `aid` exists and is
 // funded.
 func AccountExists(horizon string, aid string) (bool, error) {
@@ -48,4 +52,27 @@ func FundAccount(horizon string, aid string) error {
 	}
 
 	return nil
+}
+
+// LoadAccountData returns a map of data values on `aid` from `horizon`
+func LoadAccountData(
+	horizon string,
+	aid string,
+) (ret map[string][]byte, err error) {
+
+	url := fmt.Sprintf("%s/accounts/%s", horizon, aid)
+	resp, err := http.Get(url)
+	if err != nil {
+		err = errors.Wrap(err, "load account data failed")
+		return
+	}
+
+	defer resp.Body.Close()
+	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
+		// TODO: better error
+		err = errors.New("horizon: account load failed")
+		return
+	}
+
+	return
 }

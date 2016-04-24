@@ -4,6 +4,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/dappstore/agree"
+	"github.com/dappstore/dapp/dapp/ipfs"
+	"github.com/dappstore/dapp/dapp/stellar"
 	"github.com/pkg/errors"
 )
 
@@ -13,35 +16,43 @@ func (a *App) ApplyPolicy(p Policy) error {
 	if err != nil {
 		return errors.Wrap(err, "failed applying policy")
 	}
-
+	a.policies = append(a.policies, p)
 	return nil
 }
 
-// InitializePolicies applies `policies` t `a`
-func (a *App) InitializePolicies(policies []Policy) error {
-	a.policies = append(a.policies, policies...)
-	a.do(
-		func() error { return a.ApplyPolicy(&VerifySelf{Publisher: a.ID}) },
-	)
-
+// ApplyPolicies applies all `policies` onto `a`.
+func (a *App) ApplyPolicies(policies ...Policy) error {
 	for _, p := range policies {
 		a.do(
 			func() error { return a.ApplyPolicy(p) },
 		)
 	}
+	return nil
+}
 
-	if len(a.verificationServers) == 0 {
-		a.do(
-			func() error { return a.ApplyPolicy(&VerifyUsing{defaultHorizon}) },
+// InitializePolicies applies `policies` t `a`
+func (a *App) InitializePolicies(policies []Policy) error {
+
+	// Apply before policies
+	a.ApplyPolicies(
+		&VerifySelf{Publisher: a.ID},
+		&AgreementPolicy{agree.RequireOracle{}},
+	)
+
+	// Apply app policies
+	a.ApplyPolicies(policies...)
+
+	// Apply default policies
+	if len(a.agreements.Oracles) == 0 {
+		a.ApplyPolicies(
+			&AgreementOracle{stellar.HorizonOracle(defaultHorizon)},
 		)
 	}
 
-	// Post policies
-	// a.do(
-	// 	func() error { return a.ApplyPolicy(&Verify{}) },
-	// )
+	// Apply after policies
+	a.ApplyPolicies(&RunVerification{})
 
-	return nil
+	return a.Err
 }
 
 // Fund funds `user`
@@ -52,6 +63,16 @@ func (a *App) Fund(id *Identity) error {
 // Login logs `user` into `a`
 func (a *App) Login(user *Identity) {
 	Login(a.ID, user)
+}
+
+// StorePath adds `path` into ipfs, returning it's hash
+func (a *App) StorePath(path string) (Hash, error) {
+	h, err := ipfs.Add(path)
+	if err != nil {
+		return Hash{}, errors.Wrap(err, "store-path: ipfs add failed")
+	}
+
+	return Hash{h}, nil
 }
 
 // do is a helper to only perform actions while an app remains "un-errored".

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/dappstore/agree"
 	"github.com/dappstore/dapp/dapp/ipfs"
 	"github.com/dappstore/dapp/dapp/stellar"
 	"github.com/jbenet/go-multihash"
@@ -20,6 +21,7 @@ type App struct {
 	ID  string
 	Err error
 
+	agreements          *agree.System
 	policies            []Policy
 	verificationServers []string
 	horizons            map[string]struct{}
@@ -27,6 +29,11 @@ type App struct {
 
 // DirModifier can change a directory
 type DirModifier func(path string) error
+
+// Hash represents a single hash in the dapp system
+type Hash struct {
+	multihash.Multihash
+}
 
 // Identity represents a single identity in the dapp system
 type Identity struct {
@@ -54,7 +61,11 @@ func Fund(id *Identity) error {
 // GetApplication initializes the dapp system for integrating applications.  It
 // enables self-updateing and self-verifying features.
 func GetApplication(id string, policies ...Policy) *App {
-	app := &App{ID: id}
+	app := &App{
+		ID:         id,
+		agreements: &agree.System{},
+	}
+
 	err := app.InitializePolicies(policies)
 	if err != nil {
 		errors.Print(err)

@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/dappstore/dapp/dapp"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -34,7 +33,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dapp.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dapp/config.yaml)")
 	RootCmd.PersistentFlags().StringVar(&identity, "identity", "default", "the identity used to authorize the command")
 
 }
@@ -43,6 +42,8 @@ func init() {
 func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
+	} else {
+		cfgFile = os.ExpandEnv("$HOME/.dapp/config.yaml")
 	}
 
 	viper.SetConfigType("yaml")
@@ -51,29 +52,22 @@ func initConfig() {
 	viper.AddConfigPath("$HOME/.dapp")
 	viper.SetDefault("CacheDir", os.ExpandEnv("$HOME/.dapp/cache"))
 	viper.SetDefault("Identities", map[string]string{})
-	viper.AutomaticEnv()
+	viper.SetDefault("TrustedPublishers", []string{})
 
 	err := os.MkdirAll(os.ExpandEnv("$HOME/.dapp"), 0744)
-	if err != nil {
-		errors.Print(err)
-		os.Exit(-1)
-	}
+	mustSucceed(err)
 
 	err = viper.ReadInConfig()
-	if _, ok := err.(*viper.ConfigFileNotFoundError); ok {
-		return
+	// if it isn't a ConfigFileNotFoundError, ensure no error occurred
+	if _, ok := err.(*viper.ConfigFileNotFoundError); !ok {
+		mustSucceed(err)
 	}
 
-	if err != nil {
-		errors.Print(err)
-		os.Exit(-1)
-	}
+	err = viper.Unmarshal(&config)
+	mustSucceed(err)
 
 	err = os.MkdirAll(viper.GetString("CacheDir"), 0744)
-	if err != nil {
-		errors.Print(err)
-		os.Exit(-1)
-	}
+	mustSucceed(err)
 
 	id := getIdentity(identity)
 

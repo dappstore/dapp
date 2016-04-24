@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"path/filepath"
+
+	"github.com/dappstore/dapp/dapp"
 	"github.com/spf13/cobra"
 )
 
@@ -10,8 +13,23 @@ var publishCmd = &cobra.Command{
 	Short: "Publishes data after signing with the current dapp identity",
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		contents := map[string]dapp.Hash{}
+
+		// Add all paths to ipfs
+		for _, path := range args {
+			var err error
+			name := filepath.Base(path)
+			contents[name], err = app.StorePath(path)
+			mustSucceed(err)
+		}
+
+		// TODO: add publication file to `contents`
+
+		// pubHash, err := app.StoreMap(contents)
+		// mustSucceed(err)
+
 		// TODO:
-		// - add files to ipfs
 		// - Create directory with publication file, all published files at current  identity
 		// - Add publication to ipfs
 	},
