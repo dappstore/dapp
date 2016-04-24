@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nullstyle/dapp"
+	"github.com/dappstore/dapp/dapp"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
