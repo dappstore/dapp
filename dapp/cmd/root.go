@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/nullstyle/dapp"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-var cfgFile string
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -21,9 +20,6 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -38,27 +34,23 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application.
-
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dapp.yaml)")
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	RootCmd.PersistentFlags().StringVar(&identity, "identity", "default", "the identity used to authorize the command")
+
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" { // enable ability to specify config file via flag
+	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	}
 
-	viper.SetConfigType("json")
+	viper.SetConfigType("yaml")
 	viper.SetConfigName("config")
 	viper.AddConfigPath("/etc/dapp")
 	viper.AddConfigPath("$HOME/.dapp")
 	viper.SetDefault("CacheDir", os.ExpandEnv("$HOME/.dapp/cache"))
+	viper.SetDefault("Identities", map[string]string{})
 	viper.AutomaticEnv()
 
 	err := os.MkdirAll(os.ExpandEnv("$HOME/.dapp"), 0744)
@@ -82,4 +74,12 @@ func initConfig() {
 		errors.Print(err)
 		os.Exit(-1)
 	}
+
+	id := getIdentity(identity)
+
+	app = dapp.GetApplication(
+		"GDCQKPQOB5MSBLHWCNDESVVPQVTRWF2JLCR6LRXTXEMPS3IZCEKY7F6V",
+	)
+
+	app.Login(id)
 }
