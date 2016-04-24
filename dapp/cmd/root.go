@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -53,12 +54,32 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	}
 
-	viper.SetConfigName(".dapp") // name of config file (without extension)
-	viper.AddConfigPath("$HOME") // adding home directory as first search path
-	viper.AutomaticEnv()         // read in environment variables that match
+	viper.SetConfigType("json")
+	viper.SetConfigName("config")
+	viper.AddConfigPath("/etc/dapp")
+	viper.AddConfigPath("$HOME/.dapp")
+	viper.SetDefault("CacheDir", os.ExpandEnv("$HOME/.dapp/cache"))
+	viper.AutomaticEnv()
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	err := os.MkdirAll(os.ExpandEnv("$HOME/.dapp"), 0744)
+	if err != nil {
+		errors.Print(err)
+		os.Exit(-1)
+	}
+
+	err = viper.ReadInConfig()
+	if _, ok := err.(*viper.ConfigFileNotFoundError); ok {
+		return
+	}
+
+	if err != nil {
+		errors.Print(err)
+		os.Exit(-1)
+	}
+
+	err = os.MkdirAll(viper.GetString("CacheDir"), 0744)
+	if err != nil {
+		errors.Print(err)
+		os.Exit(-1)
 	}
 }
