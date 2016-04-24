@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
-	"strings"
 
+	"github.com/dappstore/dapp/dapp/ipfs"
+	"github.com/dappstore/dapp/dapp/stellar"
 	"github.com/jbenet/go-multihash"
 	"github.com/pkg/errors"
 	"github.com/stellar/go-stellar-base/horizon"
@@ -38,33 +38,8 @@ type Policy interface {
 	ApplyDappPolicy(*App) error
 }
 
-type VerifyAgainstAny struct{}
-type VerifyAgainstAll struct{}
-
-// Add ensures `path` is in ipfs
-func Add(path string) (multihash.Multihash, error) {
-	return ContentHash(path)
-}
-
-// ContentHash returns the content hash, according to ipfs, for `path`
-func ContentHash(path string) (ret multihash.Multihash, err error) {
-	stdout, err := exec.Command("ipfs", "add", "-q", path).Output()
-	if err != nil {
-		err = errors.Wrap(err, "ipfs add failed")
-		return
-	}
-
-	hashes := strings.Split(strings.TrimSpace(string(stdout)), "\n")
-	lastHash := hashes[len(hashes)-1]
-
-	ret, err = multihash.FromB58String(lastHash)
-	if err != nil {
-		err = errors.Wrap(err, "failed decoding ipfs output")
-		return
-	}
-
-	return
-}
+// type VerifyAgainstAny struct{}
+// type VerifyAgainstAll struct{}
 
 // CurrentUser returns the current process' identity within `app`
 func CurrentUser(app string) *Identity {
@@ -73,30 +48,7 @@ func CurrentUser(app string) *Identity {
 
 // Fund funds id on the stellar network using the configured friendbot.
 func Fund(id *Identity) error {
-	exists, err := identityExists(id)
-	if err != nil {
-		return errors.Wrap(err, "identity existence check errored")
-	}
-
-	if exists {
-		// TODO: use an actual error struct, embed the network passphrase of the
-		// horizon server consulted.
-		return errors.New("identity already funded")
-	}
-
-	url := fmt.Sprintf("%s/friendbot?addr=%s", defaultHorizon, id.Address())
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return errors.Wrap(err, "friendbot error")
-	}
-
-	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-		// TODO: use a better error by interpetting the horizon problem response
-		return errors.New("friendbot failed")
-	}
-
-	return nil
+	return stellar.FundAccount(defaultHorizon, id.Address())
 }
 
 // GetApplication initializes the dapp system for integrating applications.  It
@@ -125,7 +77,6 @@ func GetApplication(id string, policies ...Policy) *App {
 // Login logs the current process into `app` as `user`, replacing any current
 // session.
 func Login(app string, user *Identity) {
-
 	loginSessions[app] = user
 }
 
@@ -204,10 +155,6 @@ var loginSessions map[string]*Identity
 
 type manifestDisagreementError struct{}
 
-func childDir(base multihash.Multihash, dir string) string {
-	return fmt.Sprintf("ipfs/%s/%s/", base.B58String(), dir)
-}
-
 func init() {
 	loginSessions = map[string]*Identity{}
 }
@@ -221,17 +168,6 @@ func identityExists(id *Identity) (bool, error) {
 	}
 
 	return (resp.StatusCode >= 200 && resp.StatusCode < 300), nil
-}
-
-func loadDirInto(base multihash.Multihash, dir string, local string) error {
-	ipfsPath := childDir(base, dir)
-	err := exec.Command("ipfs", "get", "-o", local, ipfsPath).Run()
-	if err != nil {
-		return errors.Wrap(err, "ipfs get failed")
-
-	}
-
-	return nil
 }
 
 func loadRelease(id string, server string) (multihash.Multihash, error) {
@@ -285,30 +221,20 @@ func loadIdentityMultihash(
 	return
 }
 
-func verifyDir(base multihash.Multihash, dir string) error {
-	ipfsPath := childDir(base, dir)
-	_, err := exec.Command("ipfs", "ls", ipfsPath).Output()
-	if err != nil {
-		return errors.Wrap(err, "ipfs ls failed")
-	}
-
-	return nil
-}
-
 func verifyPublication(server, id, path string) (bool, error) {
 	publishedHash, err := loadIdentityMultihash(server, id, "dapp-publications")
 	if err != nil {
 		return false, errors.Wrap(err, "get publication hash failed")
 	}
 
-	err = verifyDir(publishedHash, id)
+	exists, err := ipfs.Exists(publishedHash, id)
 	if err != nil {
 		return false, errors.Wrap(err, "directory verification failed")
 	}
 
 	//TODO: load the manifest, verify signatures against binaries
 
-	return true, nil
+	return exists, nil
 }
 
 // ModifyDir loads an ipfs dir, modifies it according to `fn` and
@@ -318,9 +244,9 @@ func ModifyDir(
 	dir string,
 	fn DirModifier,
 ) (ret multihash.Multihash, err error) {
-	err = verifyDir(base, dir)
+	exists, err := ipfs.Exists(base, dir)
 	if err != nil {
-		err = errors.Wrap(err, "initial dir verification failed")
+		err = errors.Wrap(err, "failed to check ipfs existence")
 		return
 	}
 
@@ -330,10 +256,12 @@ func ModifyDir(
 	}
 	defer os.RemoveAll(dir)
 
-	err = loadDirInto(base, dir, next)
-	if err != nil {
-		err = errors.Wrap(err, "failed to populate temp dir")
-		return
+	if exists {
+		err = ipfs.Get(base, dir, next)
+		if err != nil {
+			err = errors.Wrap(err, "failed to populate temp dir")
+			return
+		}
 	}
 
 	err = fn(next)
@@ -342,7 +270,7 @@ func ModifyDir(
 		return
 	}
 
-	ret, err = Add(next)
+	ret, err = ipfs.Add(next)
 	if err != nil {
 		err = errors.Wrap(err, "ipfs add dailed")
 		return

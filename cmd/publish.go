@@ -1,38 +1,22 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 // publishCmd represents the publish command
 var publishCmd = &cobra.Command{
-	Use:   "publish",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "publish [file ...]",
+	Short: "Publishes data after signing with the current dapp identity",
+	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("publish called")
+		// TODO:
+		// - add files to ipfs
+		// - Create directory with publication file, all published files at current  identity
+		// - Add publication to ipfs
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(publishCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// publishCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// publishCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }
