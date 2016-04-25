@@ -16,7 +16,7 @@ var publishCmd = &cobra.Command{
 	Short: "Publishes data after signing with the current dapp identity",
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
-
+		login()
 		pfs := &fs.System{App: app}
 		ppublish := &publish.System{App: app}
 
