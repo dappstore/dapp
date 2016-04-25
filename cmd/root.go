@@ -60,8 +60,10 @@ func initConfig() {
 	mustSucceed(err)
 
 	err = viper.ReadInConfig()
-	// if it isn't a ConfigFileNotFoundError, ensure no error occurred
-	if _, ok := err.(*viper.ConfigFileNotFoundError); !ok {
+	_, notFound := err.(*viper.ConfigFileNotFoundError)
+	notExists := os.IsNotExist(err)
+
+	if !notExists && !notFound && err != nil {
 		mustSucceed(err)
 	}
 
@@ -71,12 +73,14 @@ func initConfig() {
 	err = os.MkdirAll(viper.GetString("CacheDir"), 0744)
 	mustSucceed(err)
 
+	if notExists {
+		mustSucceed(saveConfig(cfgFile))
+	}
+
 	app, err = dapp.NewApp(
 		"GDCQKPQOB5MSBLHWCNDESVVPQVTRWF2JLCR6LRXTXEMPS3IZCEKY7F6V",
 		ipfs.DefaultClient,
 		stellar.DefaultClient,
 	)
 	mustSucceed(err)
-	id := getIdentity(identity)
-	app.Login(id)
 }

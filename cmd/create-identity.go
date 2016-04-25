@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dappstore/go-dapp/stellar"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go-stellar-base/keypair"
 )
@@ -19,14 +20,23 @@ var createIdentityCmd = &cobra.Command{
 			cmd.Usage()
 			os.Exit(-1)
 		}
-
 		name := args[0]
-		kp, err := keypair.Random()
+
+		fmt.Println("creating identity...")
+		id, err := app.Providers.RandomIdentity()
 		mustSucceed(err)
+
+		kp := id.(*stellar.Identity).KP.(*keypair.Full)
+		fmt.Println("saving local config...")
 		mustSucceed(addIdentity(name, kp.Seed()))
 		mustSucceed(saveConfig(cfgFile))
 
-		fmt.Println("account id:", kp.Address())
+		// Add "Identity"
+		fmt.Println("publicly accouncing identity...")
+		mustSucceed(app.Providers.AnnounceIdentity(id))
+
+		fmt.Println("new identity successfully announced:")
+		fmt.Println("public key:", kp.Address())
 		fmt.Println("secret key:", kp.Seed())
 	},
 }

@@ -54,14 +54,18 @@ func mustSucceed(err error) {
 func getIdentity(alias string) dapp.Identity {
 	seedOrAddress, ok := viper.GetStringMapString("Identities")[alias]
 	if !ok {
-		fmt.Printf("no identity: %s", identity)
-		os.Exit(-1)
+		fail(fmt.Sprintf("no identity: %s", identity), -1)
 	}
 
 	id, err := app.Providers.ParseIdentity(seedOrAddress)
 	mustSucceed(err)
 
 	return id
+}
+
+func login() {
+	id := getIdentity(identity)
+	app.Login(id)
 }
 
 func resolveAlias(idOrAlias string) (ret dapp.Identity, err error) {
