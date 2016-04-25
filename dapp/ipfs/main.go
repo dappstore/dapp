@@ -38,7 +38,12 @@ func Exists(base multihash.Multihash, child string) (bool, error) {
 // Get loads the ipfs data in the directory `dir` underneath `base` into the
 // local directory at `local`.
 func Get(base multihash.Multihash, dir string, local string) error {
+
+	// TODO: make more clear
 	ipfsPath := Join(base, dir)
+	if dir == "" {
+		ipfsPath = Join(base)
+	}
 	err := exec.Command("ipfs", "get", "-o", local, ipfsPath).Run()
 	if err != nil {
 		return errors.Wrap(err, "ipfs get failed")
@@ -50,7 +55,7 @@ func Get(base multihash.Multihash, dir string, local string) error {
 
 // Hash returns the hash of `path` according to ipfs
 func Hash(path string) (ret multihash.Multihash, err error) {
-	stdout, err := exec.Command("ipfs", "add", "-q", path).Output()
+	stdout, err := exec.Command("ipfs", "add", "-r", "-q", path).Output()
 	if err != nil {
 		err = errors.Wrap(err, "ipfs add failed")
 		return
@@ -70,7 +75,7 @@ func Hash(path string) (ret multihash.Multihash, err error) {
 
 // Join produces a new ipfs path from `base` and `dirs`
 func Join(base multihash.Multihash, dirs ...string) string {
-	return fmt.Sprintf("ipfs/%s/%s",
+	return fmt.Sprintf("/ipfs/%s/%s",
 		base.B58String(),
 		strings.Join(dirs, "/"),
 	)

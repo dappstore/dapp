@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/dappstore/dapp/dapp"
@@ -26,8 +27,10 @@ var publishCmd = &cobra.Command{
 
 		// TODO: add publication file to `contents`
 
-		// pubHash, err := app.StoreMap(contents)
-		// mustSucceed(err)
+		pubHash, err := app.StoreMap(contents)
+		mustSucceed(err)
+
+		fmt.Println(pubHash.Multihash.B58String())
 
 		// TODO:
 		// - Create directory with publication file, all published files at current  identity

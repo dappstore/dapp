@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -20,10 +19,7 @@ var buildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		dir, err := ioutil.TempDir("", "dapp-build")
-		if err != nil {
-			errors.Print(err)
-			os.Exit(-1)
-		}
+		mustSucceed(err)
 		defer os.RemoveAll(dir)
 
 		binaryPath := filepath.Join(dir, "bin")
@@ -33,16 +29,10 @@ var buildCmd = &cobra.Command{
 		}, args...)
 
 		err = exec.Command("go", cargs...).Run()
-		if err != nil {
-			errors.Print(err)
-			os.Exit(-1)
-		}
+		mustSucceed(err)
 
 		stdout, err := exec.Command("ipfs", "add", "-q", binaryPath).Output()
-		if err != nil {
-			errors.Print(err)
-			os.Exit(-1)
-		}
+		mustSucceed(err)
 
 		hashes := strings.Split(strings.TrimSpace(string(stdout)), "\n")
 

@@ -1,8 +1,10 @@
 package dapp
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/dappstore/agree"
 	"github.com/dappstore/dapp/dapp/ipfs"
@@ -60,9 +62,42 @@ func (a *App) Fund(id *Identity) error {
 	return Fund(id)
 }
 
+// LoadMap loads all hashes into a temp directory
+func (a *App) LoadMap(contents map[string]Hash) (string, error) {
+	dir, err := ioutil.TempDir("", "dapp-load-map")
+	if err != nil {
+		return "", errors.Wrap(err, "LoadMap: create temp dir failed")
+	}
+
+	for name, hash := range contents {
+		err = ipfs.Get(hash.Multihash, "", filepath.Join(dir, name))
+		if err != nil {
+			return "", errors.Wrap(err, "LoadMap: ipfs get failed")
+		}
+	}
+
+	return dir, nil
+}
+
 // Login logs `user` into `a`
 func (a *App) Login(user *Identity) {
 	Login(a.ID, user)
+}
+
+// StoreMap adds `contents` into ipfs as a directory
+func (a *App) StoreMap(contents map[string]Hash) (Hash, error) {
+	dir, err := a.LoadMap(contents)
+	if err != nil {
+		return Hash{}, errors.Wrap(err, "StoreMap: loading local dir failed")
+	}
+	defer os.RemoveAll(dir)
+
+	h, err := ipfs.Add(dir)
+	if err != nil {
+		return Hash{}, errors.Wrap(err, "StoreMap: ipfs add failed")
+	}
+
+	return Hash{h}, nil
 }
 
 // StorePath adds `path` into ipfs, returning it's hash
