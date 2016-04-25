@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dappstore/dapp/dapp"
+	"github.com/dappstore/go-dapp"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"

@@ -10,7 +10,7 @@ import (
 
 // publishCmd represents the publish command
 var publishCmd = &cobra.Command{
-	Use:   "publish [file ...]",
+	Use:   "publish [FILES ...]",
 	Short: "Publishes data after signing with the current dapp identity",
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -38,4 +38,9 @@ var publishCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(publishCmd)
+	publishCmd.Flags().StringVarP(
+		&pathToPublish, "path", "",
+		"",
+		"path to publish FILES at",
+	)
 }
