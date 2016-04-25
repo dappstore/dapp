@@ -27,10 +27,12 @@ var publishCmd = &cobra.Command{
 
 		// TODO: add publication file to `contents`
 
-		pubHash, err := app.StoreMap(contents)
+		tx, hash, err := app.PublishMap(contents)
 		mustSucceed(err)
 
-		fmt.Println(pubHash.Multihash.B58String())
+		fmt.Println("publisher:", app.CurrentUser())
+		fmt.Println("new publications hash:", hash)
+		fmt.Println("transaction hash:", tx)
 
 		// TODO:
 		// - Create directory with publication file, all published files at current  identity

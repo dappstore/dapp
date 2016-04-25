@@ -35,9 +35,15 @@ type Hash struct {
 	multihash.Multihash
 }
 
+func (h Hash) String() string {
+	return h.Multihash.B58String()
+}
+
 // Identity represents a single identity in the dapp system
-type Identity struct {
-	keypair.KP
+type Identity interface {
+	PublicKey() string
+	Verify(input []byte, signature []byte) error
+	Sign(input []byte) ([]byte, error)
 }
 
 // Policy values represent a policy that can change state on the app
@@ -49,13 +55,13 @@ type Policy interface {
 // type VerifyAgainstAll struct{}
 
 // CurrentUser returns the current process' identity within `app`
-func CurrentUser(app string) *Identity {
+func CurrentUser(app string) Identity {
 	return loginSessions[app]
 }
 
 // Fund funds id on the stellar network using the configured friendbot.
-func Fund(id *Identity) error {
-	return stellar.FundAccount(defaultHorizon, id.Address())
+func Fund(id Identity) error {
+	return stellar.FundAccount(defaultHorizon, id.PublicKey())
 }
 
 // GetApplication initializes the dapp system for integrating applications.  It
@@ -87,7 +93,7 @@ func GetApplication(id string, policies ...Policy) *App {
 
 // Login logs the current process into `app` as `user`, replacing any current
 // session.
-func Login(app string, user *Identity) {
+func Login(app string, user Identity) {
 	loginSessions[app] = user
 }
 
@@ -128,13 +134,22 @@ func ManifestHash(id string, horizons ...string) (multihash.Multihash, error) {
 }
 
 // NewIdentity creates and validates a new identity
-func NewIdentity(seedOrAddress string) (*Identity, error) {
+func NewIdentity(seedOrAddress string) (Identity, error) {
 	kp, err := keypair.Parse(seedOrAddress)
 	if err != nil {
 		return nil, errors.Wrap(err, "parse identity")
 	}
 
-	return &Identity{kp}, nil
+	return &stellar.Identity{KP: kp}, nil
+}
+
+// PublishHash publishes `hash` using `identity`.
+func PublishHash(hash Hash, identity Identity) (string, error) {
+	return stellar.PublishHash(
+		defaultHorizon,
+		identity.(*stellar.Identity),
+		hash.Multihash,
+	)
 }
 
 // SetDefaultHorizon sets the default horizon server
@@ -162,16 +177,16 @@ var printID = flag.Bool(
 
 var version = "devel"
 var defaultHorizon = horizon.DefaultTestNetClient.URL
-var loginSessions map[string]*Identity
+var loginSessions map[string]Identity
 
 type manifestDisagreementError struct{}
 
 func init() {
-	loginSessions = map[string]*Identity{}
+	loginSessions = map[string]Identity{}
 }
 
-func identityExists(id *Identity) (bool, error) {
-	url := fmt.Sprintf("%s/accounts/%s", defaultHorizon, id.Address())
+func identityExists(id Identity) (bool, error) {
+	url := fmt.Sprintf("%s/accounts/%s", defaultHorizon, id.PublicKey())
 
 	resp, err := http.Get(url)
 	if err != nil {

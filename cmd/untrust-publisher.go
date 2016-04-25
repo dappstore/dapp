@@ -24,7 +24,7 @@ var untrustPublisherCmd = &cobra.Command{
 
 		var next []string
 		for i, addy := range config.TrustedPublishers {
-			if addy == id.Address() {
+			if addy == id.PublicKey() {
 				next = append(
 					config.TrustedPublishers[:i],
 					config.TrustedPublishers[i+1:]...,

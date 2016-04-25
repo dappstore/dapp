@@ -51,7 +51,7 @@ func mustSucceed(err error) {
 	}
 }
 
-func getIdentity(alias string) *dapp.Identity {
+func getIdentity(alias string) dapp.Identity {
 	seedOrAddress, ok := viper.GetStringMapString("Identities")[alias]
 	if !ok {
 		fmt.Printf("no identity: %s", identity)
@@ -64,7 +64,7 @@ func getIdentity(alias string) *dapp.Identity {
 	return id
 }
 
-func resolveAlias(idOrAlias string) (ret *dapp.Identity, err error) {
+func resolveAlias(idOrAlias string) (ret dapp.Identity, err error) {
 	ret, err = dapp.NewIdentity(idOrAlias)
 	if err == nil {
 		return

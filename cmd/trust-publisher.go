@@ -24,7 +24,7 @@ var trustPublisherCmd = &cobra.Command{
 		id, err := resolveAlias(idOrAlias)
 		mustSucceed(err)
 
-		newAddy := id.Address()
+		newAddy := id.PublicKey()
 
 		for _, existing := range config.TrustedPublishers {
 			if newAddy == existing {
