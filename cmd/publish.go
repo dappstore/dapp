@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 
-	"github.com/dappstore/dapp/dapp"
+	"github.com/dappstore/go-dapp/protocols/fs"
+	"github.com/dappstore/go-dapp/protocols/publish"
 	"github.com/spf13/cobra"
 )
+
+var pathToPublish string
 
 // publishCmd represents the publish command
 var publishCmd = &cobra.Command{
@@ -15,19 +17,15 @@ var publishCmd = &cobra.Command{
 	Long:  `TODO`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		contents := map[string]dapp.Hash{}
+		pfs := &fs.System{App: app}
+		ppublish := &publish.System{App: app}
 
-		// Add all paths to ipfs
-		for _, path := range args {
-			var err error
-			name := filepath.Base(path)
-			contents[name], err = app.StorePath(path)
-			mustSucceed(err)
-		}
+		hash, err := pfs.StoreLocalPaths(args)
+		mustSucceed(err)
 
 		// TODO: add publication file to `contents`
 
-		tx, hash, err := app.PublishMap(contents)
+		tx, hash, err := ppublish.SetPublications(app.CurrentUser(), hash)
 		mustSucceed(err)
 
 		fmt.Println("publisher:", app.CurrentUser())

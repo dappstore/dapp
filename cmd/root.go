@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/dappstore/dapp/dapp"
+	"github.com/dappstore/go-dapp"
+	"github.com/dappstore/go-dapp/ipfs"
+	"github.com/dappstore/go-dapp/stellar"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -69,11 +71,12 @@ func initConfig() {
 	err = os.MkdirAll(viper.GetString("CacheDir"), 0744)
 	mustSucceed(err)
 
-	id := getIdentity(identity)
-
-	app = dapp.GetApplication(
+	app, err = dapp.NewApp(
 		"GDCQKPQOB5MSBLHWCNDESVVPQVTRWF2JLCR6LRXTXEMPS3IZCEKY7F6V",
+		ipfs.DefaultClient,
+		stellar.DefaultClient,
 	)
-
+	mustSucceed(err)
+	id := getIdentity(identity)
 	app.Login(id)
 }

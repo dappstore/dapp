@@ -25,7 +25,7 @@ func addIdentity(name, seedOrAddress string) error {
 		return errors.New("identity already exists")
 	}
 
-	_, err := dapp.NewIdentity(seedOrAddress)
+	_, err := app.Providers.ParseIdentity(seedOrAddress)
 	if err != nil {
 		return errors.Wrap(err, "addIdentity: invalid identity")
 	}
@@ -58,14 +58,14 @@ func getIdentity(alias string) dapp.Identity {
 		os.Exit(-1)
 	}
 
-	id, err := dapp.NewIdentity(seedOrAddress)
+	id, err := app.Providers.ParseIdentity(seedOrAddress)
 	mustSucceed(err)
 
 	return id
 }
 
 func resolveAlias(idOrAlias string) (ret dapp.Identity, err error) {
-	ret, err = dapp.NewIdentity(idOrAlias)
+	ret, err = app.Providers.ParseIdentity(idOrAlias)
 	if err == nil {
 		return
 	}
@@ -76,7 +76,7 @@ func resolveAlias(idOrAlias string) (ret dapp.Identity, err error) {
 		return
 	}
 
-	ret, err = dapp.NewIdentity(aliasID)
+	ret, err = app.Providers.ParseIdentity(aliasID)
 	if err != nil {
 		err = errors.Wrap(err, "resolveAlias: corrupt alias")
 		return
