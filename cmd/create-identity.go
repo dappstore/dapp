@@ -33,9 +33,10 @@ var createIdentityCmd = &cobra.Command{
 
 		// Add "Identity"
 		fmt.Println("publicly accouncing identity...")
-		mustSucceed(app.Providers.AnnounceIdentity(id))
+		hash, err := app.Providers.AnnounceIdentity(id)
+		mustSucceed(err)
 
-		fmt.Println("new identity successfully announced:")
+		fmt.Println("new identity successfully announced in tx:", hash)
 		fmt.Println("public key:", kp.Address())
 		fmt.Println("secret key:", kp.Seed())
 	},
