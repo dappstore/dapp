@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var pathToPublish string
+// var pathToPublish string
 
 // publishCmd represents the publish command
 var publishCmd = &cobra.Command{
@@ -36,9 +36,9 @@ var publishCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(publishCmd)
-	publishCmd.Flags().StringVarP(
-		&pathToPublish, "path", "",
-		"",
-		"path to publish FILES at",
-	)
+	// publishCmd.Flags().StringVarP(
+	// 	&pathToPublish, "path", "",
+	// 	"",
+	// 	"path to publish FILES at",
+	// )
 }
