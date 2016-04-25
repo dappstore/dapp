@@ -33,10 +33,6 @@ var publishCmd = &cobra.Command{
 		fmt.Println("publisher:", app.CurrentUser())
 		fmt.Println("new publications hash:", hash)
 		fmt.Println("transaction hash:", tx)
-
-		// TODO:
-		// - Create directory with publication file, all published files at current  identity
-		// - Add publication to ipfs
 	},
 }
 
