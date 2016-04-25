@@ -21,6 +21,16 @@ var addIdentityCmd = &cobra.Command{
 		name := args[0]
 		seedOrAddress := args[1]
 
+		id, err := app.Providers.ParseIdentity(seedOrAddress)
+		mustSucceed(err)
+
+		public, err := app.Providers.IsIdentityAnnounced(id)
+		mustSucceed(err)
+
+		if !public {
+			fail("identity being added is not public", -1)
+		}
+
 		mustSucceed(addIdentity(name, seedOrAddress))
 		mustSucceed(saveConfig(cfgFile))
 	},
