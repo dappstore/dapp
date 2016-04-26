@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/dappstore/go-dapp"
+	apps "github.com/dappstore/go-dapp/app"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
@@ -13,7 +14,7 @@ import (
 
 var cfgFile string
 var identity string
-var app *dapp.App
+var app *apps.App
 var config struct {
 	CacheDir          string
 	Identities        map[string]string

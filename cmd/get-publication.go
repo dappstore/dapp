@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dappstore/go-dapp/protocols/fs"
+	"github.com/dappstore/go-dapp/protocols/dfs"
 	"github.com/dappstore/go-dapp/protocols/publish"
 	"github.com/spf13/cobra"
 )
@@ -31,8 +31,8 @@ var getPublicationCmd = &cobra.Command{
 
 		// TODO: check publisher trust
 
-		pfs := &fs.System{App: app}
-		ppublish := &publish.System{App: app}
+		pfs := dfs.New(app.Providers)
+		ppublish := publish.New(app.Providers)
 
 		contents, err := ppublish.GetPublications(id)
 		mustSucceed(err)
