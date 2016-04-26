@@ -20,16 +20,14 @@ var publishCmd = &cobra.Command{
 		pfs := dfs.New(app.Providers)
 		ppublish := publish.New(app.Providers, app.Providers)
 
-		hash, err := pfs.StoreLocalPaths(args)
+		content, err := pfs.StoreLocalPaths(args)
 		mustSucceed(err)
 
-		// TODO: add publication file to `contents`
-
-		tx, hash, err := ppublish.SetPublications(app.CurrentUser(), hash)
+		tx, pubs, err := ppublish.SetPublications(app.CurrentUser(), content)
 		mustSucceed(err)
 
 		fmt.Println("publisher:", app.CurrentUser())
-		fmt.Println("new publications hash:", hash)
+		fmt.Println("new publications hash:", pubs)
 		fmt.Println("transaction hash:", tx)
 	},
 }
