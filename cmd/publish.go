@@ -18,7 +18,7 @@ var publishCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		login()
 		pfs := dfs.New(app.Providers)
-		ppublish := publish.New(app.Providers)
+		ppublish := publish.New(app.Providers, app.Providers)
 
 		hash, err := pfs.StoreLocalPaths(args)
 		mustSucceed(err)

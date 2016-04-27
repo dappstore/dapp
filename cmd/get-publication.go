@@ -32,11 +32,13 @@ var getPublicationCmd = &cobra.Command{
 		// TODO: check publisher trust
 
 		pfs := dfs.New(app.Providers)
-		ppublish := publish.New(app.Providers)
+		ppublish := publish.New(app.Providers, app.Providers)
 
 		contents, err := ppublish.GetPublications(id)
 		mustSucceed(err)
 		fmt.Println("current publications hash:", contents)
+
+		// TODO: verify claims before loading data
 
 		name := filepath.Base(path)
 		dir, err := pfs.LoadTemp(contents)
