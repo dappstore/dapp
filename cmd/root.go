@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	apps "github.com/dappstore/go-dapp/app"
-	"github.com/dappstore/go-dapp/ipfs"
-	"github.com/dappstore/go-dapp/stellar"
+	. "github.com/dappstore/go-dapp/app"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -77,11 +75,9 @@ func initConfig() {
 		mustSucceed(saveConfig(cfgFile))
 	}
 
-	app, err = apps.New(
+	app, err = NewApp(
 		"GDCQKPQOB5MSBLHWCNDESVVPQVTRWF2JLCR6LRXTXEMPS3IZCEKY7F6V",
-		&apps.Store{Store: ipfs.DefaultClient},
-		&apps.KV{KV: stellar.DefaultClient},
-		&apps.IdentityProvider{IdentityProvider: stellar.DefaultClient},
+		DefaultProviders,
 	)
 	mustSucceed(err)
 }
